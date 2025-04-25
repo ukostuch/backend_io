@@ -1,0 +1,77 @@
+package com.backend.project.serviceTests;
+
+import com.backend.project.dto.FaqDto;
+import com.backend.project.model.District;
+import com.backend.project.model.Faq;
+import com.backend.project.model.Office;
+import com.backend.project.repository.FaqRepository;
+import com.backend.project.service.FaqService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.Mockito.*;
+
+public class FaqServiceTest {
+
+    private FaqService faqService;
+
+    @Mock
+    private FaqRepository faqRepository;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        faqService = new FaqService(faqRepository);
+    }
+
+    @Test
+    void saveFaq_WhenFaqDtoIsValid_CallsSaveMethod() {
+        FaqDto faqDto = new FaqDto("Where are offices located?", "Our offices are located in different districts of city.");
+
+        faqService.saveFaq(faqDto);
+
+        verify(faqRepository, times(1)).save(any(Faq.class));
+    }
+
+    @Test
+    void deleteFaq_WhenFaqExists_DeletesFaq() {
+        String faqId = "1";
+        when(faqRepository.existsById(faqId)).thenReturn(true);
+        doNothing().when(faqRepository).deleteById(faqId);
+
+        faqService.deleteFaq(faqId);
+
+        verify(faqRepository, times(1)).deleteById(faqId);
+    }
+
+    @Test
+    void deleteFaq_WhenFaqDoesNotExist_ThrowsException() {
+        String faqId = "1";
+        when(faqRepository.existsById(faqId)).thenReturn(false);
+
+        assertThrows(RuntimeException.class,()->faqService.deleteFaq(faqId));
+    }
+
+    @Test
+    void getAllFaqs_WhenFaqsExist_ReturnsFaqList(){
+        List<Faq> faqs = Arrays.asList(
+                new Faq("Question1","Answer1",true),
+                new Faq("Question2","Answer2",false)
+        );
+
+        when(faqRepository.findAll()).thenReturn(faqs);
+
+        List<Faq> result = faqService.getAllFaqs();
+
+        assertEquals(2, result.size());
+        verify(faqRepository, times(1)).findAll();
+    }
+}
