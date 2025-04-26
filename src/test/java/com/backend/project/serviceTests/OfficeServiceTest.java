@@ -54,9 +54,9 @@ public class OfficeServiceTest {
         DistrictDto districtDto = new DistrictDto(1, "District A");
         OfficeDto officeDto = new OfficeDto(
                 districtDto,
-                "+43123456789",
-                "This is a new office in center of Vienna.",
-                "Landstrasse 1010 Vienna"
+                "+48123456789",
+                "This is a new office in center of Krakow",
+                "Stolarska 12"
         );
 
         when(districtRepository.findById(anyInt())).thenReturn(Optional.of(new District()));

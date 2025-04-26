@@ -53,7 +53,7 @@ public class OfficeControllerTest {
         OfficeRetDto mockOffice = new OfficeRetDto(
                 UUID.fromString(officeId),
                 new DistrictDto(1, "District Name"),
-                "+43123456789",
+                "+48123456789",
                 "Office Address, 1234 City",
                 "photo-id-12345",
                 "Office description"
@@ -66,7 +66,7 @@ public class OfficeControllerTest {
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(UUID.fromString(officeId), response.getBody().id());
         assertEquals("District Name", response.getBody().district().name());
-        assertEquals("+43123456789", response.getBody().phoneNumber());
+        assertEquals("+48123456789", response.getBody().phoneNumber());
         assertEquals("Office Address, 1234 City", response.getBody().address());
         assertEquals("photo-id-12345", response.getBody().photo());
         assertEquals("Office description", response.getBody().description());
