@@ -5,9 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.net.BindException;
 import java.util.NoSuchElementException;
 
 @ControllerAdvice
@@ -41,6 +43,12 @@ public class ExceptionHandling {
     @ExceptionHandler(UsernameTakenException.class)
     public ResponseEntity<String> handleUsernameTakenException(UsernameTakenException exception){
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({ MethodArgumentNotValidException.class, BindException.class })
+    public ResponseEntity<?> handleValidationExceptions(Exception ex) {
+        ex.printStackTrace();
+        return ResponseEntity.badRequest().body("Validation error: " + ex.getMessage());
     }
 
 
