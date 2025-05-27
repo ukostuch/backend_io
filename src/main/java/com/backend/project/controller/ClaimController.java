@@ -58,11 +58,18 @@ public class ClaimController {
     @GetMapping("/my")
     public ResponseEntity<?> getMyClaims(HttpServletRequest request) {
         String token = request.getHeader("Authorization").substring(7);
+        System.out.println("Received token: " + token);
+
         String username = jwtGenerator.getUsernameFromJWT(token);
+        System.out.println("Extracted username from token: " + username);
 
         List<UserClaimViewDto> userClaims = claimService.getClaimsByUser(username);
+        System.out.println("Claims fetched for user " + username + ":");
+        userClaims.forEach(claim -> System.out.println(claim));
+
         return ResponseEntity.ok(userClaims);
     }
+
 
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

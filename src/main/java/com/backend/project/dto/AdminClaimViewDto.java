@@ -2,11 +2,17 @@ package com.backend.project.dto;
 
 import com.backend.project.model.ClaimStatus;
 import com.backend.project.model.StatusChange;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminClaimViewDto {
     private String claimId;
     private String description;
@@ -19,21 +25,6 @@ public class AdminClaimViewDto {
 
     private String userId;
     private String username;
+
     private List<StatusChange> statusHistory = new ArrayList<>();
-
-    public AdminClaimViewDto(String claimId, String description, ClaimStatus status, String submittedAt,
-                             UUID foundItemId, String foundItemName, String foundItemDescription,
-                             String userId, String username, List<StatusChange> statusHistory) {
-        this.claimId = claimId;
-        this.description = description;
-        this.status = status;
-        this.submittedAt = submittedAt;
-        this.foundItemId = foundItemId;
-        this.foundItemName = foundItemName;
-        this.foundItemDescription = foundItemDescription;
-        this.userId = userId;
-        this.username = username;
-        this.statusHistory = statusHistory;
-    }
-
 }

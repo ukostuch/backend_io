@@ -288,22 +288,20 @@ public class FoundItemService {
 
 
     private FoundItemRetDto mapToDto(FoundItem foundItem) {
-        PhotoItem photoItem = null;
-        if(foundItem.getPhotoId() != null){
-            photoItem = itemPhotoService.getPhotoById(foundItem.getPhotoId());
-        }
+        String content = null;
 
-        String content;
-        if(photoItem != null){
-            try{
-                Resource photo = itemPhotoService.asResource(photoItem);
-                byte[] imageBytes = photo.getContentAsByteArray();
-                content = Base64.getEncoder().encodeToString(imageBytes);
-            }catch(Exception e){
-                throw new FileException("Cannot load user picture",e);
+        if (foundItem.getPhotoId() != null) {
+            try {
+                PhotoItem photoItem = itemPhotoService.getPhotoById(foundItem.getPhotoId());
+                if (photoItem != null) {
+                    Resource photo = itemPhotoService.asResource(photoItem);
+                    byte[] imageBytes = photo.getContentAsByteArray();
+                    content = Base64.getEncoder().encodeToString(imageBytes);
+                }
+            } catch (Exception e) {
+                System.err.println("WARNING: Could not load photo for found item with ID " + foundItem.getId() + ": " + e.getMessage());
+
             }
-        }else{
-            content = null;
         }
 
         return new FoundItemRetDto(
