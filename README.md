@@ -38,7 +38,7 @@ This repository contains the backend code for a **Lost and Found Service**, buil
 
 ### Clone the repository
 ```
-git clone https://github.com/wlabedz/bweng24.git
+git clone https://github.com/ukostuch/backend_io.git
 ```
 
 ### Install dependencies
