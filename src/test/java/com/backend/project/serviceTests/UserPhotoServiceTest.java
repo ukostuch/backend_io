@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -193,4 +195,29 @@ public class UserPhotoServiceTest {
         verify(userPhotoRepository, times(1)).deleteById(oldPhotoId);
     }
 
+    @Test
+    void deletePhotoAdmin_WhenPhotoExists_DeletesPhoto() throws InvalidToken {
+        UUID oldPhotoId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        user.setId(userId);
+        user.setPhoto(oldPhotoId);
+
+        PhotoUser photo = new PhotoUser("externalId");
+        photo.setId(oldPhotoId);
+
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(userPhotoService.getPhotoById(oldPhotoId)).thenReturn(Optional.of(photo));
+
+        doNothing().when(fileStorage).deleteFile(any(String.class));
+        doNothing().when(userPhotoRepository).deleteById(any(UUID.class));
+
+        userPhotoService.deletePhotoAdmin("user");
+
+        assertNull(user.getPhoto());
+        verify(userRepository, times(1)).save(user);
+        verify(userPhotoRepository, times(1)).findById(oldPhotoId);
+        verify(fileStorage, times(1)).deleteFile("externalId");
+        verify(userPhotoRepository, times(1)).deleteById(oldPhotoId);
+    }
 }

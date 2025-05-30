@@ -132,4 +132,38 @@ public class UserPhotoControllerTest {
         verify(userPhotoService).deletePhoto(mockRequest);
     }
 
+    @Test
+    void deleteUserPhotoAdmin_Success_ReturnsOkWhenSuccessful() throws Exception {
+        String username = "user";
+
+        doNothing().when(userPhotoService).deletePhotoAdmin(username);
+
+        ResponseEntity<String> response = userPhotoController.deleteUserPhotoAdmin(username);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(userPhotoService).deletePhotoAdmin(username);
+    }
+
+    @Test
+    void deleteUserPhotoAdmin_Failed_ReturnsUnauthorizedWhenInvalidToken() throws Exception {
+        String username = "user";
+        doThrow(InvalidToken.class).when(userPhotoService).deletePhotoAdmin(username);
+        ResponseEntity<String> response = userPhotoController.deleteUserPhotoAdmin(username);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(userPhotoService).deletePhotoAdmin(username);
+    }
+    
+    @Test
+    void deleteUserPhotoAdmin_Failed_ReturnsBadRequestWhenUserNotFound() throws Exception {
+        String username = "user";
+
+        doThrow(UserNotFoundException.class).when(userPhotoService).deletePhotoAdmin(username);
+
+        ResponseEntity<String> response = userPhotoController.deleteUserPhotoAdmin(username);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(userPhotoService).deletePhotoAdmin(username);
+    }
+
 }

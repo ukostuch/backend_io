@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class FaqServiceTest {
@@ -40,6 +41,33 @@ public class FaqServiceTest {
 
         verify(faqRepository, times(1)).save(any(Faq.class));
     }
+
+    @Test
+    void approveFaq_WhenFaqExists_ApprovesFaq() {
+        String faqId = "123";
+        Faq faq = new Faq("What are the opening hours on Saturday?", "Our offices are open from 8 to 12 on Saturdays.", false);
+        when(faqRepository.findById(faqId)).thenReturn(Optional.of(faq));
+
+        faqService.approveFaq(faqId);
+
+        verify(faqRepository, times(1)).save(faq);
+        assert(faq.isApproved());
+    }
+
+    @Test
+    void updateFaq_WhenFaqExists_UpdatesFaq() {
+        String faqId = "1";
+        FaqDto faqDto = new FaqDto("Updated Question", "Updated Answer");
+        Faq faq = new Faq("Old Question", "Old Answer", false);
+        when(faqRepository.findById(faqId)).thenReturn(Optional.of(faq));
+
+        faqService.updateFaq(faqId, faqDto);
+
+        assertEquals("Updated Question", faq.getQuestion());
+        assertEquals("Updated Answer", faq.getAnswer());
+        verify(faqRepository, times(1)).save(faq);
+    }
+
 
     @Test
     void deleteFaq_WhenFaqExists_DeletesFaq() {

@@ -30,7 +30,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-        import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class FoundItemServiceTest {
 
@@ -149,6 +150,46 @@ class FoundItemServiceTest {
         verify(foundItemRepository, times(1)).save(any(FoundItem.class));
     }
 
+
+    @Test
+    void updateItem_WhenItemExistsAndUserIsAdmin_UpdatesItem() throws NotAllowedException, InvalidToken {
+        UUID userId = UUID.randomUUID();
+        String token = "Bearer someToken";
+        UserEntity user = new UserEntity();
+        user.setId(userId);
+
+        UUID id = UUID.randomUUID();
+        FoundItem foundItem = new FoundItem();
+        foundItem.setId(id);
+        foundItem.setDescription("Old Description");
+        foundItem.setCategory("Old Category");
+        foundItem.setFoundPlace("Old Place");
+        foundItem.setFoundDate(LocalDate.of(2000,10,10));
+        foundItem.setUser(user);
+
+        when(request.getHeader("Authorization")).thenReturn(token);
+        when(jwtGenerator.validateToken("someToken")).thenReturn(true);
+        when(jwtGenerator.getUsernameFromJWT("someToken")).thenReturn("user");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+
+        List<String> roles = new ArrayList<>();
+        roles.add("ADMIN");
+
+        when(jwtGenerator.getRolesFromJWT(token)).thenReturn(roles);
+
+        when(foundItemRepository.findById(id)).thenReturn(Optional.of(foundItem));
+        when(foundItemRepository.save(foundItem)).thenReturn(foundItem);
+
+        FoundItemRetDto updatedItem = foundItemService.updateItem(id, new FoundItemDto(id, foundItem.getName(),"New Category", "New Description", "office", null,LocalDate.of(2020,10,10),"New Place"),request);
+
+        assertNotNull(updatedItem);
+        assertEquals("New Description", updatedItem.description());
+        assertEquals("New Category", updatedItem.category());
+        assertEquals("New Place", updatedItem.foundPlace());
+        assertEquals(LocalDate.of(2020,10,10), updatedItem.foundDate());
+        verify(foundItemRepository, times(1)).save(foundItem);
+    }
+
     @Test
     void getAllItems_WhenItemsExist_ReturnsAllItems() {
         FoundItem item1 = new FoundItem(UUID.randomUUID(), "Item1", "Category1", "Description1", "Office1", null, LocalDate.now(), "Place1", null, null, null);
@@ -248,6 +289,46 @@ class FoundItemServiceTest {
         UUID id = UUID.randomUUID();
         mockItem.setPhotoId(id);
         when(foundItemRepository.findById(itemId)).thenReturn(Optional.of(mockItem));
+
+        doNothing().when(itemPhotoService).deletePhotoById(mockItem.getPhotoId());
+
+        foundItemService.deletePhoto(itemId, request);
+
+        assertNull(mockItem.getPhotoId());
+        verify(foundItemRepository).save(mockItem);
+        verify(itemPhotoService).deletePhotoById(id);
+    }
+
+    @Test
+    void deletePhoto_WhenAdminDeletes_RemovesOtherUsersPhoto() throws Exception {
+        String validToken = "Bearer token";
+
+        when(request.getHeader("Authorization")).thenReturn(validToken);
+        when(jwtGenerator.validateToken("token")).thenReturn(true);
+
+        UserEntity admin = new UserEntity();
+        admin.setId(UUID.randomUUID());
+        admin.setUsername("admin");
+
+        when(jwtGenerator.getUsernameFromJWT("token")).thenReturn("admin");
+
+        UserEntity mockUser = new UserEntity();
+        mockUser.setId(UUID.randomUUID());
+        mockUser.setUsername("user");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+
+        List<String> roles = List.of("ADMIN");
+        when(jwtGenerator.getRolesFromJWT("token")).thenReturn(roles);
+
+        UUID itemId = UUID.randomUUID();
+        FoundItem mockItem = new FoundItem();
+        mockItem.setId(itemId);
+        mockItem.setUser(mockUser);
+        UUID id = UUID.randomUUID();
+        mockItem.setPhotoId(id);
+        when(foundItemRepository.findById(itemId)).thenReturn(Optional.of(mockItem));
+
 
         doNothing().when(itemPhotoService).deletePhotoById(mockItem.getPhotoId());
 

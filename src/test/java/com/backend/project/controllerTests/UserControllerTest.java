@@ -20,6 +20,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -167,5 +169,14 @@ public class UserControllerTest {
         assertTrue(response.getBody().isEmpty());
     }
 
+    @Test
+    void deleteUserById_Success_DeletesUser() {
+        String usernameToDelete = "user";
+        doNothing().when(userService).removeByUsername(usernameToDelete);
+
+        userController.deleteUserById(usernameToDelete);
+
+        verify(userService, times(1)).removeByUsername(usernameToDelete);
+    }
 
 }

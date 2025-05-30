@@ -32,6 +32,19 @@ class DistrictControllerTest {
     }
 
     @Test
+    void addDistrict_WithValidData_CreatesDistrict() {
+        DistrictDto districtDto = new DistrictDto(1, "District 1");
+        District district = new District(1, "District 1", List.of());
+
+        when(districtService.addDistrict(districtDto)).thenReturn(district);
+
+        ResponseEntity<District> response = districtController.addDistrict(districtDto);
+
+        assertEquals(201, response.getStatusCodeValue());
+        verify(districtService, times(1)).addDistrict(districtDto);
+    }
+
+    @Test
     void getAllDistricts_WhenCalled_ReturnsListOfDistricts() {
         List<District> districts = Arrays.asList(
                 new District(1, "District 1", List.of(new Office())),

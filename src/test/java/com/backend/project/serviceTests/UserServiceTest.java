@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class UserServiceTest {
@@ -173,6 +174,37 @@ class UserServiceTest {
     }
 
     @Test
+    void updateUser_WhenAdmin_UpdatesUserSuccessfully() throws Exception {
+        String token = "Bearer someToken";
+        String username = "oldUsername";
+        UserPatchDto userPatchDto = new UserPatchDto("newUsername", "John", "Doe", "john.doe@example.com", "Mr.", "US");
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(token);
+
+        UserEntity existingUser = new UserEntity();
+        existingUser.setUsername(username);
+        existingUser.setMail("old@example.com");
+
+        when(jwtGenerator.getUsernameFromJWT("someToken")).thenReturn("admin");
+        when(jwtGenerator.getRolesFromJWT("someToken")).thenReturn(List.of("ADMIN"));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByUsername("newUsername")).thenReturn(Optional.empty());
+        when(userRepository.findByMail("john.doe@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserDto result = userService.updateUser(username, userPatchDto, request);
+
+        assertEquals("newUsername", result.username());
+        assertEquals("John", result.name());
+        assertEquals("Doe", result.surname());
+        assertEquals("john.doe@example.com", result.mail());
+        assertEquals("US", result.country());
+        assertEquals("Mr.", result.salutation());
+        verify(userRepository, times(1)).save(existingUser);
+    }
+
+    @Test
     void updateUser_WhenUserUpdatesSelf_UpdatesUserSuccessfully() throws Exception {
         String token = "Bearer someToken";
         String username = "user1";
@@ -280,6 +312,25 @@ class UserServiceTest {
     }
 
     @Test
+    void getAll_WhenNoUsersWithRoleUser_ReturnsEmptyList() {
+        UserEntity user1 = new UserEntity();
+        user1.setUsername("user1");
+        user1.setRoles(List.of(new Roles("ADMIN")));
+
+        UserEntity user2 = new UserEntity();
+        user2.setUsername("user2");
+        user2.setRoles(List.of(new Roles("ADMIN")));
+
+        List<UserEntity> users = List.of(user1, user2);
+
+        when(userRepository.findAll()).thenReturn(users);
+
+        List<UserDto> result = userService.getAll();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     void getAll_WhenNoUsersExist_ReturnsEmptyList() {
         List<UserEntity> users = new ArrayList<>();
 
@@ -288,6 +339,31 @@ class UserServiceTest {
         List<UserDto> result = userService.getAll();
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAll_WhenUsersWithDifferentRoles_ReturnsOnlyUsersWithRoleUser() {
+        UserEntity user1 = new UserEntity();
+        user1.setUsername("user1");
+        user1.setRoles(List.of(new Roles("USER")));
+
+        UserEntity user2 = new UserEntity();
+        user2.setUsername("user2");
+        user2.setRoles(List.of(new Roles("ADMIN")));
+
+        UserEntity user3 = new UserEntity();
+        user3.setUsername("user3");
+        user3.setRoles(List.of(new Roles("USER")));
+
+        List<UserEntity> users = List.of(user1, user2, user3);
+
+        when(userRepository.findAll()).thenReturn(users);
+
+        List<UserDto> result = userService.getAll();
+
+        assertEquals(2, result.size());
+        assertEquals("user1", result.get(0).username());
+        assertEquals("user3", result.get(1).username());
     }
 
     @Test

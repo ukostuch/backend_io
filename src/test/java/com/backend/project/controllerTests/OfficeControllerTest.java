@@ -36,6 +36,38 @@ public class OfficeControllerTest {
     }
 
     @Test
+    public void addOffice_ValidOfficeDto_ReturnsCreatedStatus() throws FailedUploadingPhoto {
+        DistrictDto districtDto = new DistrictDto(1, "District A");
+
+        OfficeDto officeDto = new OfficeDto(
+                districtDto,
+                "+48123456789",
+                "This is a new office in center of Krakow.",
+                "Polna 123 Krakow"
+        );
+
+        Office mockOffice = new Office(
+                UUID.randomUUID(),
+                new District(districtDto.id(), districtDto.name()),
+                officeDto.phoneNumber(),
+                officeDto.address(),
+                UUID.randomUUID(),
+                officeDto.description(),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        when(officeService.addOffice(any(OfficeDto.class),any(MultipartFile.class))).thenReturn(mockOffice);
+
+        ResponseEntity<String> response = officeController.addOffice(officeDto, multipartFile);
+
+        assertEquals(201, response.getStatusCodeValue());
+        verify(officeService, times(1)).addOffice(any(OfficeDto.class), any(MultipartFile.class));
+    }
+
+
+    @Test
     public void getOffices_OfficesExist_ReturnsListOfOffices() {
         OfficeRetDto officeRetDto = mock(OfficeRetDto.class);
         when(officeService.getAllOffices()).thenReturn(Optional.of(List.of(officeRetDto)));
@@ -44,6 +76,57 @@ public class OfficeControllerTest {
 
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(1, response.getBody().orElseThrow().size());
+    }
+
+
+    @Test
+    public void deleteOfficeById_OfficeNotFound_ReturnsNotFoundStatus() {
+        UUID random_id = UUID.randomUUID();
+        doThrow(new OfficeNotFoundException(random_id.toString()))
+                .when(officeService)
+                .removeOffice(any(String.class));
+
+        ResponseEntity<String> response = officeController.deleteOfficeById(random_id.toString());
+
+        assertEquals(404, response.getStatusCodeValue());
+        assertEquals("Office not found with id: " + random_id, response.getBody());
+        verify(officeService, times(1)).removeOffice(any(String.class));
+    }
+
+
+    @Test
+    public void updateOffice_ValidOfficeDto_ReturnsUpdatedOffice() throws FailedUploadingPhoto {
+        String officeId = UUID.randomUUID().toString();
+        DistrictDto districtDto = new DistrictDto(1, "District A");
+
+        OfficeDto officeDto = new OfficeDto(
+                districtDto,
+                "+48123456789",
+                "This is a new office in center of Krakow.",
+                "Polna 123 Krakow"
+        );
+
+        Office updatedOffice = new Office(
+                UUID.fromString(officeId),
+                new District(districtDto.id(), districtDto.name()),
+                officeDto.phoneNumber(),
+                officeDto.address(),
+                UUID.randomUUID(),
+                "This is updated description",
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        when(officeService.updateOffice(any(OfficeDto.class), any(MultipartFile.class), any(String.class))).thenReturn(updatedOffice);
+
+        ResponseEntity<Office> response = officeController.updateOffice(officeId, officeDto, multipartFile);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(officeId, response.getBody().getId().toString());
+        assertEquals("This is updated description", response.getBody().getDescription());
+        assertEquals("Polna 123 Krakow", response.getBody().getAddress());
+        verify(officeService, times(1)).updateOffice(any(OfficeDto.class), any(MultipartFile.class), any(String.class));
     }
 
     @Test

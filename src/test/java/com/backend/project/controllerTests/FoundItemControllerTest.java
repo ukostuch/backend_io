@@ -26,6 +26,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 class FoundItemControllerTest {
@@ -177,6 +181,49 @@ class FoundItemControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         verify(foundItemService, times(1)).deleteItem(itemId);
     }
+
+    @Test
+    void updateItem_Success_ReturnsOkWhenSuccessful() throws Exception {
+        UUID itemId = testItem.id();
+        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+
+        when(foundItemService.updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest))).thenReturn(testRetItem);
+
+        ResponseEntity<FoundItemRetDto> response = foundItemController.updateItem(itemId, testItem, mockRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(testRetItem.id(), response.getBody().id());
+        verify(foundItemService).updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest));
+    }
+
+
+    @Test
+    void updateItem_Failed_ReturnsUnauthorizedWhenInvalidToken() throws Exception {
+        UUID itemId = testItem.id();
+        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+
+        when(foundItemService.updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest))).thenThrow(InvalidToken.class);
+
+        ResponseEntity<FoundItemRetDto> response = foundItemController.updateItem(itemId, testItem, mockRequest);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(foundItemService).updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest));
+    }
+
+    @Test
+    void updateItem_Failed_ReturnsNotFoundWhenItemNotFound() throws Exception {
+        UUID itemId = testItem.id();
+        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+
+        when(foundItemService.updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest))).thenThrow(ItemNotFoundException.class);
+
+        ResponseEntity<FoundItemRetDto> response = foundItemController.updateItem(itemId, testItem, mockRequest);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(foundItemService).updateItem(eq(itemId), any(FoundItemDto.class), eq(mockRequest));
+    }
+
 
     @Test
     void uploadNewPicture_Success_ReturnsOkWhenSuccessful() throws Exception {

@@ -42,6 +42,74 @@ class FaqControllerTest {
         assertEquals("What is Spring?", ((Faq) ((Iterable<?>) response.getBody()).iterator().next()).getQuestion());
     }
 
+    @Test
+    void askQuestion_WithValidData_SubmitsQuestionSuccessfully() {
+        FaqDto faqDto = new FaqDto("What is Java?", "Java is a programming language");
+        doNothing().when(faqService).saveFaq(faqDto);
+
+        ResponseEntity<String> response = faqController.askQuestion(faqDto);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Question Submitted successfully!\n Wait for our staff to provide an answer\n", response.getBody());
+    }
+
+    @Test
+    void approveQuestion_WithValidId_ApprovesQuestionSuccessfully() {
+        String faqId = "1";
+        doNothing().when(faqService).approveFaq(faqId);
+
+        ResponseEntity<String> response = faqController.approveQuestion(faqId);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Question Approved successfully!", response.getBody());
+    }
+
+    @Test
+    void deleteFaq_WithValidId_DeletesFaqSuccessfully() {
+        String faqId = "1";
+        doNothing().when(faqService).deleteFaq(faqId);
+
+        ResponseEntity<String> response = faqController.deleteFaq(faqId);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Faq Deleted Successfully!", response.getBody());
+    }
+
+    @Test
+    void updateFaq_WithValidIdAndData_UpdatesFaqSuccessfully() {
+        String faqId = "1";
+        FaqDto faqDto = new FaqDto("Updated Question", "Updated Answer");
+        doNothing().when(faqService).updateFaq(faqId, faqDto);
+
+        ResponseEntity<String> response = faqController.updateFaq(faqId, faqDto);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Faq Updated Successfully!", response.getBody());
+    }
+
+    @Test
+    void deleteFaq_WithInvalidId_ReturnsNotFoundError() {
+        String faqId = "-1";
+        doThrow(new RuntimeException("Faq not found: " + faqId)).when(faqService).deleteFaq(faqId);
+
+        ResponseEntity<String> response = faqController.deleteFaq(faqId);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("FAQ not found", response.getBody());
+    }
+
+    @Test
+    void updateFaq_WithInvalidId_ReturnsNotFoundError() {
+        String faqId = "-1";
+        FaqDto faqDto = new FaqDto("Updated Question", "Updated Answer");
+        doThrow(new RuntimeException("FAQ not found")).when(faqService).updateFaq(faqId, faqDto);
+
+        ResponseEntity<String> response = faqController.updateFaq(faqId, faqDto);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("FAQ not found", response.getBody());
+    }
+
 }
 
 
